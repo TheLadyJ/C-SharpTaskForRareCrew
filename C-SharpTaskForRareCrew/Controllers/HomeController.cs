@@ -75,5 +75,21 @@ namespace C_SharpTaskForRareCrew.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        [HttpPost]
+        public IActionResult SaveChartToFolder(string imageData)
+        {
+            var chartBytes = Convert.FromBase64String(imageData.Split(',')[1]);
+            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "ChartImages");
+
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
+
+            var filePath = Path.Combine(folderPath, "chart.png");
+            System.IO.File.WriteAllBytes(filePath, chartBytes);
+            return Ok("Chart image saved successfully.");
+        }
+
     }
 }

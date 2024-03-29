@@ -6,8 +6,8 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="container">
-    <div class="table-container">
+<div class="container" style="display: flex">
+    <div class="table-container" style="width: 65%;">
         <table class="table">
             <thead>
                 <tr>
@@ -35,10 +35,107 @@
             </tbody>
         </table>
     </div>
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+        <button onclick="downloadChart()" style="margin: 5px">Download chart to your downloads folder</button>
+        <button onclick="saveChartToFolder()" style="margin: 5px">Download chart to a project's folder</button>
+    </div>
 </div>
 
 <style>
     .highlight {
         background-color: salmon;
     }
+
+    .chart-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 35%;
+    }
 </style>
+
+<script>
+    const employees = @Html.Raw(JsonSerializer.Serialize(Model));
+    const EmployeesNames = employees.map(employee => employee.EmployeeName);
+    const EmployeesTotalWorkingHours = employees.map(employee => employee.TotalWorkingHours);
+
+    var data = {
+        labels: EmployeesNames,
+        datasets: [{
+            data: EmployeesTotalWorkingHours,
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.5)',
+                'rgba(54, 162, 235, 0.5)',
+                'rgba(255, 206, 86, 0.5)',
+                'rgba(75, 192, 192, 0.5)',
+                'rgba(153, 102, 255, 0.5)',
+                'rgba(255, 159, 64, 0.5)',
+                'rgba(144, 238, 144, 0.5)',
+                'rgba(128, 0, 128, 0.5)',
+                'rgba(0, 0, 139, 0.5)',
+                'rgba(220, 20, 60, 0.5)'
+            ]
+        }]
+    };
+
+
+    var options = {
+        plugins: {
+            labels: {
+                render: 'percentage',
+                fontSize: 12,
+                fontColor: '#fff',
+                textShadow: true,
+            }
+        }
+    };
+
+    var ctx = document.getElementById("myChart").getContext("2d");
+    var myChart = new Chart(ctx, {
+        type: 'pie',
+        data: data,
+        options: options
+    });
+
+    function downloadChart() {
+        var canvas = document.getElementById("myChart");
+        var imageUrl = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+        var link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = 'chart.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function saveChartToFolder() {
+        var canvas = document.getElementById("myChart");
+        var imageUrl = canvas.toDataURL("image/png");
+
+        $.ajax({
+            type: "POST",
+            url: "/Home/SaveChartToFolder",
+            data: { imageData: imageUrl },
+            success: function (response) {
+                console.log(response);
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'The chart has been saved successfully!',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'There was an error saving the chart. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    }
+</script>
